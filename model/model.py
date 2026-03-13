@@ -1,3 +1,4 @@
+
 from transformers import PretrainedConfig
 
 
@@ -70,3 +71,25 @@ class MokioMindConfig(PretrainedConfig):
             if self.inference_rope_scaling
             else None
         )
+
+import torch
+import torch.nn as nn
+
+class RMSNorm(nn.Module):
+    def __init__(self,dim,eps=1e-8):
+        super().__init__()
+        self.dim=dim
+        self.eps=eps
+        self.weight=nn.Parameter(torch.ones(dim))
+    
+    def norm(self,x):
+        return torch.rsqrt(x.pow(2).mean(-1,keepdim=True)+self.eps)
+    
+    def forward(self,x):
+        return self.weight*self.norm(x)
+
+# 测试代码
+norm = RMSNorm(dim=512)
+x = torch.randn(2, 10, 512)  # (batch_size, seq_len, hidden_dim)
+out = norm(x)
+print(out.shape)  # 输出 torch.Size([2, 10, 512])，形状与输入一致
